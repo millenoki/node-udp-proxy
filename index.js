@@ -42,10 +42,21 @@ var UdpProxy = function (options) {
         });
     }).on('message', function (msg, sender) {
         var client = proxy.createClient(msg, sender);
-        if (!client._bound) client.bind(0, proxyHost);
+        if (!client._bound) {
+            try {
+            client.bind(0, proxyHost);  
+            }
+            catch(err) {
+                console.log(err);
+            }
+        } 
         else client.emit('send', msg, sender);
     }).on('error', function (err) {
-        this.close();
+                        try {
+                            _client.close();
+                        } catch(err) {
+                            console.log(err);
+                        }
         proxy.emit('error', err);
     }).on('close', function () {
         proxy.emit('close');
@@ -90,7 +101,7 @@ UdpProxy.prototype.createClient = function createClient(msg, sender) {
         proxy.send(msg, this.peer.port, this.peer.address, function (err, bytes) {
             if (err) proxy.emit('proxyError', err);
         });
-        proxy.emit('proxyMsg', msg, sender);
+        proxy.emit('proxyMsg', msg, sender, client);
     }).on('close', function () {
         proxy.emit('proxyClose', this.peer);
         this.removeAllListeners();
